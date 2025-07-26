@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gra w Słowa z AI</title>
+    <title>BORDLE! 🍕</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
     <style>
@@ -88,7 +88,7 @@
 <body class="bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200 flex flex-col items-center justify-between min-h-screen p-2">
 
     <header class="w-full max-w-md mx-auto text-center py-4 border-b border-gray-300 dark:border-gray-600">
-        <h1 class="text-4xl font-bold tracking-wider">GRA W SŁOWA</h1>
+        <h1 class="text-4xl font-bold tracking-wider">BORDLE 🍕</h1>
     </header>
 
     <div id="notification-container" class="fixed top-16 h-12 flex items-center justify-center z-50 pointer-events-none"></div>
@@ -194,7 +194,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (wordHistory.length > 0) {
             historyPrompt = ` Unikaj powtarzania tych słów: ${wordHistory.join(', ')}.`;
         }
-        const prompt = `Podaj jedno, popularne, pięcioliterowe, polskie słowo w mianowniku liczby pojedynczej. Odpowiedz tylko tym słowem, pisanym małymi literami, bez żadnych dodatkowych znaków, kropek i wyjaśnień.${historyPrompt}`;
+        const prompt = `Podaj jedno, popularne, pięcioliterowe, polskie słowo w mianowniku liczby pojedynczej. Odpowiedz tylko tym słowem, pisanym małymi literami, bez żadnych dodatkowych znaków, kropek i wyjaśnień, Nie powtarzaj słów, za każdym razem generuj inne.${historyPrompt}`;
 
         targetWord = await callGroqAPI(prompt);
         
