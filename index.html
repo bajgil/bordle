@@ -186,7 +186,7 @@ document.addEventListener('DOMContentLoaded', () => {
         showLoading("Losuję słowo...");
         isGameOver = true;
         
-        targetWord = await callGeminiAPI("Podaj jedno, popularne, pięcioliterowe, polskie słowo w mianowniku liczby pojedynczej. Odpowiedz tylko tym słowem, pisanym małymi literami, bez żadnych dodatkowych znaków, kropek i wyjaśnień.");
+        targetWord = await callGeminiAPI("Podaj jedno, popularne, pięcioliterowe, polskie słowo w mianowniku liczby pojedynczej. Odpowiedz tylko tym słowem, pisanym małymi literami, bez żadnych dodatkowych znaków, kropek i wyjaśnień. Nie powtarzaj słów, mają być za każdym razem inne.");
         
         if (!targetWord || targetWord.length !== 5) {
             showNotification("Błąd losowania. Używam słowa awaryjnego.", 3000);
