@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BORDLE</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            touch-action: manipulation;
+        }
+        .tile {
+            width: 62px;
+            height: 62px;
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 2rem;
+            line-height: 1;
+            font-weight: bold;
+            vertical-align: middle;
+            box-sizing: border-box;
+            text-transform: uppercase;
+            border: 2px solid #e5e7eb;
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+            position: relative; 
+        }
+        .tile.filled {
+            border-color: #d1d5db;
+        }
+        .tile.flip {
+            transform: rotateX(180deg);
+        }
+        .tile .front, .tile .back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            -webkit-backface-visibility: hidden;
+            backface-visibility: hidden;
+            border-radius: 4px;
+        }
+        
+        .tile .back {
+            transform: rotateX(180deg);
+        }
+        
+        .tile.correct .back { background-color: #6aaa64; border-color: #6aaa64; color: white; }
+        .tile.present .back { background-color: #c9b458; border-color: #c9b458; color: white; }
+        .tile.absent .back { background-color: #787c7e; border-color: #787c7e; color: white; }
+        
+        .key { transition: background-color 0.2s ease-in-out; }
+        .key.correct { background-color: #6aaa64 !important; border-color: #6aaa64 !important; color: white !important; }
+        .key.present { background-color: #c9b458 !important; border-color: #c9b458 !important; color: white !important; }
+        .key.absent { background-color: #787c7e !important; border-color: #787c7e !important; color: white !important; }
+        
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+            20%, 40%, 60%, 80% { transform: translateX(5px); }
+        }
+        .shake { animation: shake 0.5s; }
+        @keyframes pop-in {
+            0% { opacity: 0; transform: scale(0.8); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+        .notification { animation: pop-in 0.3s ease-out; }
+        
+        #loading-overlay .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border-left-color: #09f;
+            animation: spin 1s ease infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200 flex flex-col items-center justify-between min-h-screen p-2">
+
+    <header class="w-full max-w-md mx-auto text-center py-4 border-b border-gray-300 dark:border-gray-600">
+        <h1 class="text-4xl font-bold tracking-wider">BORDLE 🥐</h1>
+    </header>
+
+    <div id="notification-container" class="fixed top-16 h-12 flex items-center justify-center z-50 pointer-events-none"></div>
+
+    <main id="game-container" class="flex-grow flex items-center justify-center w-full">
+        <div id="game-board" class="grid grid-cols-5 grid-rows-6 gap-1.5"></div>
+    </main>
+
+    <div id="keyboard" class="w-full max-w-lg mx-auto p-2"></div>
+    
+    <div id="result-modal" class="fixed inset-0 bg-black bg-opacity-60 hidden items-center justify-center z-50">
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-8 max-w-sm w-full text-center">
+            <h2 id="result-title" class="text-2xl font-bold mb-4"></h2>
+            <p class="mb-2">Prawidłowe słowo to:</p>
+            <p id="correct-word" class="text-2xl font-bold uppercase tracking-widest mb-6"></p>
+            <button id="play-again-button" class="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg text-lg">
+                Zagraj ponownie
+            </button>
+        </div>
+    </div>
+
+    <div id="loading-overlay" class="fixed inset-0 bg-white dark:bg-gray-900 bg-opacity-80 flex-col hidden items-center justify-center z-50">
+        <div class="spinner"></div>
+        <p id="loading-text" class="mt-4 text-lg">Losuję słowo...</p>
+    </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    // --- ZMIENNE GLOBALNE ---
+    const GUESS_COUNT = 6;
+    const WORD_LENGTH = 5;
+    let targetWord = '';
+    let currentRow = 0;
+    let currentTile = 0;
+    let isGameOver = false;
+    let isRequestPending = false;
+    let keyboardMode = 'en'; // 'en' lub 'pl'
+
+    // --- ELEMENTY DOM ---
+    const gameBoard = document.getElementById('game-board');
+    const keyboard = document.getElementById('keyboard');
+    const notificationContainer = document.getElementById('notification-container');
+    const resultModal = document.getElementById('result-modal');
+    const resultTitle = document.getElementById('result-title');
+    const correctWordEl = document.getElementById('correct-word');
+    const playAgainButton = document.getElementById('play-again-button');
+    const loadingOverlay = document.getElementById('loading-overlay');
+    const loadingText = document.getElementById('loading-text');
+
+    // --- LOGIKA API GEMINI ---
+    async function callGeminiAPI(prompt) {
+        const apiKey = "AIzaSyBaTE6iWm6S2kwGEz96lfeEOcsoBcakA54"; // Klucz API jest zarządzany przez środowisko Canvas
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+        
+        const payload = {
+            contents: [{
+                role: "user",
+                parts: [{ text: prompt }]
+            }],
+            generationConfig: {
+                temperature: 0.8,
+                maxOutputTokens: 10,
+            }
+        };
+
+        try {
+            const response = await fetch(apiUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            if (!response.ok) {
+                throw new Error(`Błąd API: ${response.statusText}`);
+            }
+
+            const result = await response.json();
+            if (result.candidates && result.candidates.length > 0 &&
+                result.candidates[0].content && result.candidates[0].content.parts &&
+                result.candidates[0].content.parts.length > 0) {
+                return result.candidates[0].content.parts[0].text.trim().toLowerCase().replace(/[^a-ząćęłńóśźż]/g, '');
+            } else {
+                console.error("Nieoczekiwana struktura odpowiedzi API:", result);
+                return null;
+            }
+        } catch (error) {
+            console.error("Błąd podczas wywoływania API Gemini:", error);
+            showNotification("Błąd połączenia z AI", 3000);
+            return null;
+        }
+    }
+
+    // --- INICJALIZACJA GRY ---
+    async function initGame() {
+        showLoading("Losuję słowo...");
+        isGameOver = true;
+        
+        targetWord = await callGeminiAPI("Podaj jedno, popularne, pięcioliterowe, polskie słowo w mianowniku liczby pojedynczej. Odpowiedz tylko tym słowem, pisanym małymi literami, bez żadnych dodatkowych znaków, kropek i wyjaśnień.");
+        
+        if (!targetWord || targetWord.length !== 5) {
+            showNotification("Błąd losowania. Używam słowa awaryjnego.", 3000);
+            targetWord = "kwiat"; 
+        }
+
+        console.log("Wylosowane słowo:", targetWord);
+        currentRow = 0;
+        currentTile = 0;
+        isGameOver = false;
+        keyboardMode = 'en';
+
+        gameBoard.innerHTML = '';
+        for (let i = 0; i < GUESS_COUNT * WORD_LENGTH; i++) {
+            const tile = document.createElement('div');
+            tile.classList.add('tile');
+            const front = document.createElement('div');
+            front.classList.add('front');
+            const back = document.createElement('div');
+            back.classList.add('back');
+            tile.appendChild(front);
+            tile.appendChild(back);
+            gameBoard.appendChild(tile);
+        }
+        for (let i = 0; i < GUESS_COUNT; i++) {
+            for (let j = 0; j < WORD_LENGTH; j++) {
+                gameBoard.children[i * WORD_LENGTH + j].id = `tile-${i}-${j}`;
+            }
+        }
+
+        renderKeyboard();
+        resultModal.classList.add('hidden');
+        hideLoading();
+    }
+    
+    function renderKeyboard() {
+        keyboard.innerHTML = '';
+
+        const enKeyRows = [
+            ['q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p'],
+            ['a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l'],
+            ['z', 'x', 'c', 'v', 'b', 'n', 'm']
+        ];
+        const plKeyRows = [
+            ['ą', 'ć', 'ę', 'ł', 'ń', 'ó', 'ś', 'ż', 'ź']
+        ];
+
+        const rowsToRender = keyboardMode === 'en' ? enKeyRows : plKeyRows;
+
+        rowsToRender.forEach(row => {
+            const rowDiv = document.createElement('div');
+            rowDiv.classList.add('flex', 'justify-center', 'gap-1.5', 'my-1.5');
+            row.forEach(key => {
+                const button = document.createElement('button');
+                button.classList.add('key', 'h-14', 'rounded-md', 'font-bold', 'uppercase', 'flex-1', 'bg-gray-200', 'dark:bg-gray-600', 'hover:bg-gray-300', 'dark:hover:bg-gray-700');
+                button.dataset.key = key;
+                button.textContent = key;
+                rowDiv.appendChild(button);
+            });
+            keyboard.appendChild(rowDiv);
+        });
+
+        // Klawisze funkcyjne i przełącznik
+        const bottomRow = document.createElement('div');
+        bottomRow.classList.add('flex', 'justify-center', 'gap-1.5', 'my-1.5');
+
+        const enterKey = document.createElement('button');
+        enterKey.classList.add('key', 'h-14', 'rounded-md', 'font-bold', 'uppercase', 'flex-1', 'bg-gray-300', 'dark:bg-gray-500');
+        enterKey.dataset.key = 'enter';
+        enterKey.textContent = 'Enter';
+        bottomRow.appendChild(enterKey);
+
+        const toggleButton = document.createElement('button');
+        toggleButton.classList.add('key', 'h-14', 'rounded-md', 'font-bold', 'px-2', 'text-xs', 'flex-1', 'bg-gray-300', 'dark:bg-gray-500');
+        toggleButton.textContent = keyboardMode === 'en' ? 'Polskie Litery' : 'Angielskie Litery';
+        toggleButton.onclick = () => {
+            keyboardMode = keyboardMode === 'en' ? 'pl' : 'en';
+            renderKeyboard();
+        };
+        bottomRow.appendChild(toggleButton);
+
+        const backspaceKey = document.createElement('button');
+        backspaceKey.classList.add('key', 'h-14', 'rounded-md', 'font-bold', 'uppercase', 'flex-1', 'bg-gray-300', 'dark:bg-gray-500');
+        backspaceKey.dataset.key = 'backspace';
+        backspaceKey.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2M3 12l6.414 6.414a2 2 0 002.828 0L19 12M3 12l6.414-6.414a2 2 0 012.828 0L19 12" /></svg>`;
+        bottomRow.appendChild(backspaceKey);
+
+        keyboard.appendChild(bottomRow);
+    }
+
+    function handleKeyPress(key) {
+        if (isGameOver || isRequestPending) return;
+        if (key === 'enter') submitGuess();
+        else if (key === 'backspace') deleteLetter();
+        else if (/^[a-ząćęłńóśźż]$/i.test(key) && currentTile < WORD_LENGTH) addLetter(key);
+    }
+
+    function addLetter(letter) {
+        const tile = document.getElementById(`tile-${currentRow}-${currentTile}`);
+        if (!tile) return;
+        tile.querySelector('.front').textContent = letter;
+        tile.classList.add('filled');
+        currentTile++;
+    }
+
+    function deleteLetter() {
+        if (currentTile > 0) {
+            currentTile--;
+            const tile = document.getElementById(`tile-${currentRow}-${currentTile}`);
+            if (!tile) return;
+            tile.querySelector('.front').textContent = '';
+            tile.classList.remove('filled');
+        }
+    }
+
+    async function submitGuess() {
+        if (currentTile < WORD_LENGTH) {
+            showNotification("Za mało liter");
+            shakeRow(currentRow);
+            return;
+        }
+
+        let guess = '';
+        for (let i = 0; i < WORD_LENGTH; i++) {
+            guess += document.getElementById(`tile-${currentRow}-${i}`).querySelector('.front').textContent;
+        }
+
+        showLoading("Sprawdzam słowo...");
+        isRequestPending = true;
+
+        const validationResponse = await callGeminiAPI(`Czy "${guess}" to jest poprawne pięcioliterowe polskie słowo? Odpowiedz tylko i wyłącznie "tak" lub "nie".`);
+        
+        isRequestPending = false;
+        hideLoading();
+
+        if (validationResponse !== 'tak') {
+            showNotification("Nie ma takiego słowa");
+            shakeRow(currentRow);
+            return;
+        }
+
+        flipRow(guess);
+    }
+
+    function flipRow(guess) {
+        const guessChars = guess.split('');
+        const targetChars = [...targetWord];
+        const statuses = Array(WORD_LENGTH).fill('absent');
+
+        for (let i = 0; i < WORD_LENGTH; i++) {
+            if (guessChars[i] === targetChars[i]) {
+                statuses[i] = 'correct';
+                targetChars[i] = null;
+            }
+        }
+
+        for (let i = 0; i < WORD_LENGTH; i++) {
+            if (statuses[i] === 'correct') continue;
+            const letterIndexInTarget = targetChars.indexOf(guessChars[i]);
+            if (letterIndexInTarget !== -1) {
+                statuses[i] = 'present';
+                targetChars[letterIndexInTarget] = null;
+            }
+        }
+
+        statuses.forEach((status, i) => {
+            setTimeout(() => {
+                const tile = document.getElementById(`tile-${currentRow}-${i}`);
+                const back = tile.querySelector('.back');
+                back.textContent = guessChars[i];
+                
+                tile.classList.add(status);
+                tile.classList.add('flip');
+                
+                updateKeyboard(guessChars[i], status);
+            }, i * 300);
+        });
+
+        setTimeout(() => checkGameOver(guess), WORD_LENGTH * 300);
+    }
+    
+    function updateKeyboard(letter, status) {
+        const key = keyboard.querySelector(`[data-key='${letter}']`);
+        if (!key) return;
+        const currentStatus = key.dataset.status;
+
+        if (currentStatus === 'correct') return;
+        if (currentStatus === 'present' && status === 'absent') return;
+        
+        key.classList.remove('correct', 'present', 'absent');
+        key.classList.add(status);
+        key.dataset.status = status;
+    }
+
+    function checkGameOver(guess) {
+        if (guess === targetWord) {
+            showNotification("Wygrałeś!", 2000);
+            isGameOver = true;
+            setTimeout(() => showResultModal(true), 1000);
+        } else if (currentRow === GUESS_COUNT - 1) {
+            isGameOver = true;
+            setTimeout(() => showResultModal(false), 1000);
+        } else {
+            currentRow++;
+            currentTile = 0;
+        }
+    }
+    
+    function showLoading(text) {
+        loadingText.textContent = text;
+        loadingOverlay.classList.remove('hidden');
+        loadingOverlay.classList.add('flex');
+    }
+
+    function hideLoading() {
+        loadingOverlay.classList.add('hidden');
+        loadingOverlay.classList.remove('flex');
+    }
+
+    function showNotification(message, duration = 1500) {
+        const notification = document.createElement('div');
+        notification.textContent = message;
+        notification.className = 'notification bg-gray-800 dark:bg-gray-200 text-white dark:text-black font-bold py-2 px-4 rounded-md shadow-lg';
+        notificationContainer.innerHTML = '';
+        notificationContainer.appendChild(notification);
+        setTimeout(() => notification.remove(), duration);
+    }
+
+    function shakeRow(rowNum) {
+        for (let i = 0; i < WORD_LENGTH; i++) {
+            document.getElementById(`tile-${rowNum}-${i}`).classList.add('shake');
+        }
+        setTimeout(() => {
+            for (let i = 0; i < WORD_LENGTH; i++) {
+                document.getElementById(`tile-${rowNum}-${i}`).classList.remove('shake');
+            }
+        }, 500);
+    }
+    
+    function showResultModal(isWin) {
+        resultTitle.textContent = isWin ? 'Gratulacje!' : 'Niestety, nie udało się';
+        correctWordEl.textContent = targetWord;
+        resultModal.classList.remove('hidden');
+        resultModal.classList.add('flex');
+    }
+
+    document.addEventListener('keydown', (e) => handleKeyPress(e.key.toLowerCase()));
+    keyboard.addEventListener('click', (e) => {
+        const key = e.target.closest('[data-key]');
+        if (key) handleKeyPress(key.dataset.key);
+    });
+    playAgainButton.addEventListener('click', initGame);
+
+    initGame();
+});
+</script>
+
+</body>
+</html>
