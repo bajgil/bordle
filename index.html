@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BORDLE</title>
+    <title>Gra w Słowa z AI</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
     <style>
@@ -88,7 +88,7 @@
 <body class="bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200 flex flex-col items-center justify-between min-h-screen p-2">
 
     <header class="w-full max-w-md mx-auto text-center py-4 border-b border-gray-300 dark:border-gray-600">
-        <h1 class="text-4xl font-bold tracking-wider">BORDLE 🥐</h1>
+        <h1 class="text-4xl font-bold tracking-wider">GRA W SŁOWA</h1>
     </header>
 
     <div id="notification-container" class="fixed top-16 h-12 flex items-center justify-center z-50 pointer-events-none"></div>
@@ -126,6 +126,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let isGameOver = false;
     let isRequestPending = false;
     let keyboardMode = 'en'; // 'en' lub 'pl'
+    let wordHistory = []; // Historia losowanych słów
 
     // --- ELEMENTY DOM ---
     const gameBoard = document.getElementById('game-board');
@@ -138,44 +139,47 @@ document.addEventListener('DOMContentLoaded', () => {
     const loadingOverlay = document.getElementById('loading-overlay');
     const loadingText = document.getElementById('loading-text');
 
-    // --- LOGIKA API GEMINI ---
-    async function callGeminiAPI(prompt) {
-        const apiKey = "AIzaSyBaTE6iWm6S2kwGEz96lfeEOcsoBcakA54"; // Klucz API jest zarządzany przez środowisko Canvas
-        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+    // --- LOGIKA API GROQ ---
+    async function callGroqAPI(prompt) {
+        // UWAGA: Wklej swój klucz API od Groq poniżej.
+        const GROQ_API_KEY = "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"; 
+        const apiUrl = 'https://api.groq.com/openai/v1/chat/completions';
+
+        if (!GROQ_API_KEY) {
+            showNotification("Brak klucza API Groq!", 5000);
+            return null;
+        }
         
         const payload = {
-            contents: [{
-                role: "user",
-                parts: [{ text: prompt }]
-            }],
-            generationConfig: {
-                temperature: 0.8,
-                maxOutputTokens: 10,
-            }
+            model: "llama3-8b-8192", // Szybki model dostępny na Groq
+            messages: [{ role: "user", content: prompt }],
+            temperature: 1, // Zwiększona temperatura dla większej losowości
+            max_tokens: 10,
         };
 
         try {
             const response = await fetch(apiUrl, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${GROQ_API_KEY}`
+                },
                 body: JSON.stringify(payload)
             });
 
             if (!response.ok) {
-                throw new Error(`Błąd API: ${response.statusText}`);
+                throw new Error(`Błąd API Groq: ${response.statusText}`);
             }
 
             const result = await response.json();
-            if (result.candidates && result.candidates.length > 0 &&
-                result.candidates[0].content && result.candidates[0].content.parts &&
-                result.candidates[0].content.parts.length > 0) {
-                return result.candidates[0].content.parts[0].text.trim().toLowerCase().replace(/[^a-ząćęłńóśźż]/g, '');
+            if (result.choices && result.choices[0] && result.choices[0].message) {
+                return result.choices[0].message.content.trim().toLowerCase().replace(/[^a-ząćęłńóśźż]/g, '');
             } else {
-                console.error("Nieoczekiwana struktura odpowiedzi API:", result);
+                console.error("Nieoczekiwana struktura odpowiedzi API Groq:", result);
                 return null;
             }
         } catch (error) {
-            console.error("Błąd podczas wywoływania API Gemini:", error);
+            console.error("Błąd podczas wywoływania API Groq:", error);
             showNotification("Błąd połączenia z AI", 3000);
             return null;
         }
@@ -186,14 +190,23 @@ document.addEventListener('DOMContentLoaded', () => {
         showLoading("Losuję słowo...");
         isGameOver = true;
         
-        targetWord = await callGeminiAPI("Podaj jedno, popularne, pięcioliterowe, polskie słowo w mianowniku liczby pojedynczej. Odpowiedz tylko tym słowem, pisanym małymi literami, bez żadnych dodatkowych znaków, kropek i wyjaśnień. Nie powtarzaj słów, mają być za każdym razem inne.");
+        let historyPrompt = "";
+        if (wordHistory.length > 0) {
+            historyPrompt = ` Unikaj powtarzania tych słów: ${wordHistory.join(', ')}.`;
+        }
+        const prompt = `Podaj jedno, popularne, pięcioliterowe, polskie słowo w mianowniku liczby pojedynczej. Odpowiedz tylko tym słowem, pisanym małymi literami, bez żadnych dodatkowych znaków, kropek i wyjaśnień.${historyPrompt}`;
+
+        targetWord = await callGroqAPI(prompt);
         
         if (!targetWord || targetWord.length !== 5) {
-            showNotification("Błąd losowania. Używam słowa awaryjnego.", 3000);
+            showNotification("Błąd losowania. Używam słowa awaryjnego. (lub próbuj odświeżyć stronę)", 3000);
             targetWord = "kwiat"; 
         }
-
+        
+        wordHistory.push(targetWord);
         console.log("Wylosowane słowo:", targetWord);
+        console.log("Historia słów:", wordHistory);
+
         currentRow = 0;
         currentTile = 0;
         isGameOver = false;
@@ -249,7 +262,6 @@ document.addEventListener('DOMContentLoaded', () => {
             keyboard.appendChild(rowDiv);
         });
 
-        // Klawisze funkcyjne i przełącznik
         const bottomRow = document.createElement('div');
         bottomRow.classList.add('flex', 'justify-center', 'gap-1.5', 'my-1.5');
 
@@ -317,7 +329,7 @@ document.addEventListener('DOMContentLoaded', () => {
         showLoading("Sprawdzam słowo...");
         isRequestPending = true;
 
-        const validationResponse = await callGeminiAPI(`Czy "${guess}" to jest poprawne pięcioliterowe polskie słowo? Odpowiedz tylko i wyłącznie "tak" lub "nie".`);
+        const validationResponse = await callGroqAPI(`Czy "${guess}" to jest poprawne pięcioliterowe polskie słowo? Odpowiedz tylko i wyłącznie "tak" lub "nie".`);
         
         isRequestPending = false;
         hideLoading();
