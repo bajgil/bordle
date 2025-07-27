@@ -12,10 +12,6 @@
 
 ###
 
-<img src="https://raw.githubusercontent.com/bajgil/bajgil/output/snake.svg" alt="Snake animation" />
-
-###
-
 <br clear="both">
 
 <p align="center">‘BORDLE’ is an open-source copy of the cult game ‘WORDLE’ created by Josh Wardle and released in October 2021. The game involves guessing a five-letter answer word. The user gets six chances, and for each unsuccessful attempt, the game informs them whether the letters used in that attempt were correct (Source: Wikipedia).<br><br>Although there is no official source code for ‘WORDLE’ anywhere on the internet, I decided to write it... using a single HTML file.</p>
@@ -33,14 +29,6 @@
   <img width="12" />
   <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/css3/css3-original.svg" height="40" alt="css logo"  />
 </div>
-
-###
-
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/bajgil/bajgil/output/pacman-contribution-graph-dark.svg">
-  <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/bajgil/bajgil/output/pacman-contribution-graph.svg">
-  <img alt="pacman contribution graph" src="https://raw.githubusercontent.com/bajgil/bajgil/output/pacman-contribution-graph.svg">
-</picture>
 
 ###
 
