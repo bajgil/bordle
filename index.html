@@ -3,8 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BORDLE! 🍕</title>
-    <!-- Ostrzeżenie: cdn.tailwindcss.com nie jest zalecany w produkcji. Użyj lokalnej instalacji Tailwind CSS: https://tailwindcss.com/docs/installation -->
+    <title>BORDLE! 🦆</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
     <style>
@@ -69,15 +68,8 @@
             transform-style: preserve-3d;
             position: relative;
         }
-
-        .tile.filled {
-            border-color: var(--tw-tile-filled-border-color);
-        }
-
-        .tile.flip {
-            transform: rotateX(180deg);
-        }
-
+        .tile.filled { border-color: var(--tw-tile-filled-border-color); }
+        .tile.flip { transform: rotateX(180deg); }
         .tile .front, .tile .back {
             position: absolute;
             width: 100%;
@@ -89,19 +81,15 @@
             backface-visibility: hidden;
             border-radius: 4px;
         }
-
-        .tile .back {
-            transform: rotateX(180deg);
-        }
-
+        .tile .back { transform: rotateX(180deg); }
         .tile.correct .back { background-color: #6aaa64; border-color: #6aaa64; color: white; }
         .tile.present .back { background-color: #c9b458; border-color: #c9b458; color: white; }
         .tile.absent .back { background-color: #787c7e; border-color: #787c7e; color: white; }
 
         .key { transition: background-color 0.2s ease-in-out; }
-        .key.correct { background-color: #6aaa64 !important; border-color: #6aaa64 !important; color: white !important; }
-        .key.present { background-color: #c9b458 !important; border-color: #c9b458 !important; color: white !important; }
-        .key.absent { background-color: #787c7e !important; border-color: #787c7e !important; color: white !important; }
+        .key.correct { background-color: #6aaa64 !important; color: white !important; }
+        .key.present { background-color: #c9b458 !important; color: white !important; }
+        .key.absent { background-color: #787c7e !important; color: white !important; }
 
         @keyframes shake {
             0%, 100% { transform: translateX(0); }
@@ -110,7 +98,6 @@
         }
         .shake { animation: shake 0.5s; }
 
-        /* Animacja dla modali */
         @keyframes pop-in {
             0% { opacity: 0; transform: translateY(10px) scale(0.98); }
             100% { opacity: 1; transform: translateY(0) scale(1); }
@@ -120,7 +107,6 @@
             background-color: var(--tw-modal-bg-color);
             color: var(--tw-modal-text-color);
         }
-
         .notification {
             animation: pop-in 0.3s ease-out;
             background-color: var(--tw-notification-bg-color);
@@ -141,40 +127,17 @@
         }
 
         #confetti-canvas {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            z-index: 100;
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; z-index: 100;
         }
 
-        /* Styl dla przełącznika motywu */
-        #theme-toggle {
-            display: none;
-        }
-        .theme-toggle-label {
-            cursor: pointer;
-            position: relative;
-        }
-        .theme-icon-light, .theme-icon-dark {
-            transition: opacity 0.2s;
-        }
-        [data-theme="dark"] .theme-icon-light {
-            opacity: 0;
-            position: absolute;
-        }
-        [data-theme="dark"] .theme-icon-dark {
-            opacity: 1;
-        }
-        .theme-icon-dark {
-            opacity: 0;
-            position: absolute;
-        }
-        .theme-icon-light {
-            opacity: 1;
-        }
+        #theme-toggle { display: none; }
+        .theme-toggle-label { cursor: pointer; position: relative; }
+        .theme-icon-light, .theme-icon-dark { transition: opacity 0.2s; }
+        [data-theme="dark"] .theme-icon-light { opacity: 0; position: absolute; }
+        [data-theme="dark"] .theme-icon-dark { opacity: 1; }
+        .theme-icon-dark { opacity: 0; position: absolute; }
+        .theme-icon-light { opacity: 1; }
     </style>
 </head>
 <body class="flex flex-col items-center justify-between min-h-screen p-2">
@@ -182,11 +145,11 @@
     <canvas id="confetti-canvas"></canvas>
 
     <header class="w-full max-w-md mx-auto text-center py-4 border-b border-gray-300 flex justify-between items-center">
-        <button id="stats-button" class="text-gray-500 p-2 rounded-full hover:bg-gray-100">
+        <button id="stats-button" class="p-2 rounded-full hover:bg-gray-100">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
         </button>
-        <h1 class="text-4xl font-bold tracking-wider">BORDLE 🍕</h1>
-        <button id="changelog-button" class="text-gray-500 p-2 rounded-full hover:bg-gray-100">
+        <h1 class="text-4xl font-bold tracking-wider">BORDLE 🦆</h1>
+        <button id="changelog-button" class="p-2 rounded-full hover:bg-gray-100">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
         </button>
     </header>
@@ -214,15 +177,9 @@
         <div class="modal-content rounded-lg shadow-xl p-6 max-w-md w-full text-left relative">
             <h2 class="text-2xl font-bold mb-4">Changelog</h2>
             <ul class="list-disc list-inside space-y-2">
-                <li><span class="font-bold">v1.4:</span> Poprawki błędów (motywy, UI), ulepszone animacje.</li>
-                <li><span class="font-bold">v1.3:</span> Dodano changelog, statystyki, motywy i konfetti!</li>
-                <li><span class="font-bold">v1.2:</span> Zmiana API na Groq, dodano historię słów.</li>
-                <li><span class="font-bold">v1.1:</span> Dodano przełączaną klawiaturę (PL/EN).</li>
-                <li><span class="font-bold">v1.0:</span> Integracja z AI do losowania i sprawdzania słów.</li>
+                <li><span class="font-bold">v2.0:</span> Zastąpiono AI Lokalnym bankiem słów - Usprawniono grę.</li>
             </ul>
-            <button id="close-changelog" class="absolute top-2 right-2 p-2 rounded-full text-2xl leading-none" style="background-color: var(--tw-button-close-bg-color);">
-                &times;
-            </button>
+            <button id="close-changelog" class="absolute top-2 right-2 p-2 rounded-full text-2xl leading-none" style="background-color: var(--tw-button-close-bg-color);">&times;</button>
         </div>
     </div>
 
@@ -230,19 +187,14 @@
         <div class="modal-content rounded-lg shadow-xl p-6 max-w-md w-full text-center relative">
             <h2 class="text-2xl font-bold mb-4">Statystyki</h2>
             <p class="text-lg">Odgadnięte słowa: <span id="win-count" class="font-bold">0</span></p>
-            <button id="close-stats" class="absolute top-2 right-2 p-2 rounded-full text-2xl leading-none" style="background-color: var(--tw-button-close-bg-color);">
-                &times;
-            </button>
+            <button id="close-stats" class="absolute top-2 right-2 p-2 rounded-full text-2xl leading-none" style="background-color: var(--tw-button-close-bg-color);">&times;</button>
         </div>
     </div>
 
-    <div id="api-error-overlay" class="fixed inset-0 bg-black bg-opacity-75 backdrop-blur-sm flex-col hidden items-center justify-center z-[60] text-center p-4">
-        <div class="modal-content p-8 rounded-lg shadow-xl">
-            <h2 class="text-2xl font-bold mb-4">Wystąpił błąd! ⛔</h2>
-            <p class="max-w-md">Nasza strona używa darmowego API, czasem one nie działa.. prosimy wybacz nam 🙏 (możesz spróbować wygenerować słowo ponownie, kliknij tylko w przycisk)</p>
-            <button id="retry-init-button" class="mt-6 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-                Spróbuj ponownie
-            </button>
+    <div id="error-overlay" class="fixed inset-0 bg-black bg-opacity-75 backdrop-blur-sm flex-col hidden items-center justify-center z-[60] text-center p-4">
+        <div class="modal-content p-8 rounded-lg shadow-xl max-w-lg">
+            <h2 id="error-title" class="text-2xl font-bold mb-4 text-red-500"></h2>
+            <p id="error-message" class=""></p>
         </div>
     </div>
 
@@ -267,10 +219,9 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentRow = 0;
     let currentTile = 0;
     let isGameOver = false;
-    let isRequestPending = false;
     let keyboardMode = 'en';
     let wordHistory = [];
-    const FALLBACK_WORDS = ["kwiat", "słońce", "morze", "drzwi", "kotek", "polska", "serce", "domek"];
+    let validWords = [];
 
     // --- ELEMENTY DOM ---
     const gameBoard = document.getElementById('game-board');
@@ -282,8 +233,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const playAgainButton = document.getElementById('play-again-button');
     const loadingOverlay = document.getElementById('loading-overlay');
     const loadingText = document.getElementById('loading-text');
-    const apiErrorOverlay = document.getElementById('api-error-overlay');
-    const retryInitButton = document.getElementById('retry-init-button');
+    const errorOverlay = document.getElementById('error-overlay');
+    const errorTitle = document.getElementById('error-title');
+    const errorMessage = document.getElementById('error-message');
     const changelogButton = document.getElementById('changelog-button');
     const changelogModal = document.getElementById('changelog-modal');
     const closeChangelogButton = document.getElementById('close-changelog');
@@ -302,80 +254,45 @@ document.addEventListener('DOMContentLoaded', () => {
         localStorage.setItem('theme', theme);
         themeToggle.checked = theme === 'dark';
     };
-
     const savedTheme = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
     applyTheme(savedTheme);
-
     themeToggle.addEventListener('change', () => {
         applyTheme(themeToggle.checked ? 'dark' : 'light');
     });
 
-    // --- LOGIKA API GROQ ---
-    async function callGroqAPI(prompt) {
-        const GROQ_API_KEY = "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";
-        const apiUrl = 'https://api.groq.com/openai/v1/chat/completions';
-
-        if (!GROQ_API_KEY) {
-            return { error: "Brak klucza API Groq!" };
-        }
-
-        const payload = {
-            model: "llama3-8b-8192",
-            messages: [{ role: "user", content: prompt }],
-            temperature: 1,
-            max_tokens: 10,
-        };
-
-        try {
-            const response = await fetch(apiUrl, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${GROQ_API_KEY}` },
-                body: JSON.stringify(payload)
-            });
-
-            if (!response.ok) throw new Error(`Błąd API Groq: ${response.statusText}`);
-
-            const result = await response.json();
-            if (result.choices && result.choices[0] && result.choices[0].message) {
-                const word = result.choices[0].message.content.trim().toLowerCase().replace(/[^a-ząćęłńóśźż]/g, '');
-                return { word };
-            }
-            throw new Error("Nieoczekiwana struktura odpowiedzi API Groq");
-        } catch (error) {
-            console.error("Błąd podczas wywoływania API Groq:", error);
-            return { error: "Błąd połączenia z AI" };
-        }
-    }
-
     // --- INICJALIZACJA GRY ---
     async function initGame() {
-        showLoading("Losuję słowo...");
+        showLoading("Wczytuję listę słów...");
         isGameOver = true;
 
-        let historyPrompt = wordHistory.length > 0 ? ` Unikaj powtarzania tych słów: ${wordHistory.join(', ')}.` : "";
-        const prompt = `Podaj jedno, popularne, pięcioliterowe, polskie słowo w mianowniku liczby pojedynczej. Odpowiedz tylko tym słowem, pisanym małymi literami, bez żadnych dodatkowych znaków, kropek i wyjaśnień.${historyPrompt}`;
-
-        const apiResult = await callGroqAPI(prompt);
-
-        if (apiResult.error || !apiResult.word || apiResult.word.length !== 5) {
-            if (apiResult.error) {
-                showApiError();
-            } else {
-                showNotification("Wystąpił błąd!", 3000);
-                showApiError();
-                targetWord = FALLBACK_WORDS[Math.floor(Math.random() * FALLBACK_WORDS.length)];
-                wordHistory.push(targetWord);
-                console.log("Wylosowane słowo (awaryjne):", targetWord);
-                setupBoardAndKeyboard();
+        if (validWords.length === 0) {
+            try {
+                const response = await fetch('slowa.txt');
+                if (!response.ok) throw new Error('Nie udało się wczytać pliku slowa.txt');
+                const text = await response.text();
+                validWords = text.split(',').map(w => w.trim().toLowerCase()).filter(w => w.length === WORD_LENGTH && w.match(/^[a-ząćęłńóśźż]+$/));
+                if (validWords.length === 0) throw new Error('Plik slowa.txt jest pusty lub nie zawiera prawidłowych słów.');
+            } catch (error) {
+                console.error("Błąd ładowania słów:", error);
+                showGenericError("Błąd krytyczny ⛔", `Nie można załadować pliku ze słowami. Skontaktuj się z Administratorem witryny - root@bajgiel.fun`);
+                hideLoading();
+                return;
             }
-            hideLoading();
-            return;
         }
-
-        targetWord = apiResult.word;
+        
+        showLoading("Losuję słowo...");
+        let availableWords = validWords.filter(w => !wordHistory.includes(w));
+        
+        if (availableWords.length === 0) {
+            wordHistory = [];
+            availableWords = validWords;
+            showNotification("Wszystkie słowa użyte! Historia zresetowana.", 3000);
+        }
+        
+        targetWord = availableWords[Math.floor(Math.random() * availableWords.length)];
         wordHistory.push(targetWord);
         console.log("Wylosowane słowo:", targetWord);
-
+        
         setupBoardAndKeyboard();
         hideLoading();
     }
@@ -385,25 +302,17 @@ document.addEventListener('DOMContentLoaded', () => {
         currentTile = 0;
         isGameOver = false;
         keyboardMode = 'en';
-
         gameBoard.innerHTML = '';
         for (let i = 0; i < GUESS_COUNT * WORD_LENGTH; i++) {
             const tile = document.createElement('div');
             tile.classList.add('tile');
-            const front = document.createElement('div');
-            front.classList.add('front');
-            const back = document.createElement('div');
-            back.classList.add('back');
+            const front = document.createElement('div'); front.classList.add('front');
+            const back = document.createElement('div'); back.classList.add('back');
             tile.appendChild(front);
             tile.appendChild(back);
             gameBoard.appendChild(tile);
+            tile.id = `tile-${Math.floor(i / WORD_LENGTH)}-${i % WORD_LENGTH}`;
         }
-        for (let i = 0; i < GUESS_COUNT; i++) {
-            for (let j = 0; j < WORD_LENGTH; j++) {
-                gameBoard.children[i * WORD_LENGTH + j].id = `tile-${i}-${j}`;
-            }
-        }
-
         renderKeyboard();
         hideModal(resultModal);
     }
@@ -416,13 +325,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
         rowsToRender.forEach(row => {
             const rowDiv = document.createElement('div');
-            rowDiv.classList.add('flex', 'justify-center', 'gap-1.5', 'my-1.5');
+            rowDiv.className = 'flex justify-center gap-1.5 my-1.5';
             row.forEach(key => {
                 const button = document.createElement('button');
-                button.classList.add('key', 'h-14', 'rounded-md', 'font-bold', 'uppercase', 'flex-1');
+                button.className = 'key h-14 rounded-md font-bold uppercase flex-1';
                 button.style.backgroundColor = 'var(--tw-key-bg-color)';
-                button.addEventListener('mouseenter', () => button.style.backgroundColor = 'var(--tw-key-hover-bg-color)');
-                button.addEventListener('mouseleave', () => button.style.backgroundColor = 'var(--tw-key-bg-color)');
                 button.dataset.key = key;
                 button.textContent = key;
                 rowDiv.appendChild(button);
@@ -431,15 +338,16 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         const bottomRow = document.createElement('div');
-        bottomRow.classList.add('flex', 'justify-center', 'gap-1.5', 'my-1.5');
+        bottomRow.className = 'flex justify-center gap-1.5 my-1.5';
         const enterKey = document.createElement('button');
-        enterKey.classList.add('key', 'h-14', 'rounded-md', 'font-bold', 'uppercase', 'flex-1');
+        enterKey.className = 'key h-14 rounded-md font-bold uppercase flex-1';
         enterKey.style.backgroundColor = 'var(--tw-key-special-bg-color)';
         enterKey.dataset.key = 'enter';
         enterKey.textContent = 'Enter';
         bottomRow.appendChild(enterKey);
+
         const toggleButton = document.createElement('button');
-        toggleButton.classList.add('key', 'h-14', 'rounded-md', 'font-bold', 'px-2', 'text-sm', 'flex-1');
+        toggleButton.className = 'key h-14 rounded-md font-bold px-2 text-sm flex-1';
         toggleButton.style.backgroundColor = 'var(--tw-key-special-bg-color)';
         toggleButton.textContent = keyboardMode === 'en' ? 'Polskie Litery' : 'Angielskie Litery';
         toggleButton.onclick = () => {
@@ -447,8 +355,9 @@ document.addEventListener('DOMContentLoaded', () => {
             renderKeyboard();
         };
         bottomRow.appendChild(toggleButton);
+
         const backspaceKey = document.createElement('button');
-        backspaceKey.classList.add('key', 'h-14', 'rounded-md', 'font-bold', 'uppercase', 'flex-1');
+        backspaceKey.className = 'key h-14 rounded-md font-bold uppercase flex-1';
         backspaceKey.style.backgroundColor = 'var(--tw-key-special-bg-color)';
         backspaceKey.dataset.key = 'backspace';
         backspaceKey.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2M3 12l6.414 6.414a2 2 0 002.828 0L19 12M3 12l-6.414-6.414a2 2 0 012.828 0L19 12" /></svg>`;
@@ -457,7 +366,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function handleKeyPress(key) {
-        if (isGameOver || isRequestPending) return;
+        if (isGameOver) return;
         if (key === 'enter') submitGuess();
         else if (key === 'backspace') deleteLetter();
         else if (/^[a-ząćęłńóśźż]$/i.test(key) && currentTile < WORD_LENGTH) addLetter(key);
@@ -481,7 +390,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    async function submitGuess() {
+    function submitGuess() {
         if (currentTile < WORD_LENGTH) {
             showNotification("Za mało liter");
             shakeRow(currentRow);
@@ -491,13 +400,9 @@ document.addEventListener('DOMContentLoaded', () => {
         for (let i = 0; i < WORD_LENGTH; i++) {
             guess += document.getElementById(`tile-${currentRow}-${i}`).querySelector('.front').textContent;
         }
-        showLoading("Sprawdzam słowo...");
-        isRequestPending = true;
-        const validationResult = await callGroqAPI(`Czy "${guess}" to jest poprawne pięcioliterowe polskie słowo? Odpowiedz tylko i wyłącznie "tak" lub "nie".`);
-        isRequestPending = false;
-        hideLoading();
-        if (validationResult.error || validationResult.word !== 'tak') {
-            showNotification(validationResult.error || "Nie ma takiego słowa");
+
+        if (!validWords.includes(guess.toLowerCase())) {
+            showNotification("Nie ma takiego słowa");
             shakeRow(currentRow);
             return;
         }
@@ -508,6 +413,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const guessChars = guess.split('');
         const targetChars = [...targetWord];
         const statuses = Array(WORD_LENGTH).fill('absent');
+        
         for (let i = 0; i < WORD_LENGTH; i++) {
             if (guessChars[i] === targetChars[i]) {
                 statuses[i] = 'correct';
@@ -563,16 +469,16 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- UI & Storage ---
     function showLoading(text) {
         loadingText.textContent = text;
-        loadingOverlay.classList.remove('hidden');
-        loadingOverlay.classList.add('flex');
+        loadingOverlay.classList.remove('hidden'); loadingOverlay.classList.add('flex');
     }
     function hideLoading() {
-        loadingOverlay.classList.add('hidden');
-        loadingOverlay.classList.remove('flex');
+        loadingOverlay.classList.add('hidden'); loadingOverlay.classList.remove('flex');
     }
-    function showApiError() {
+    function showGenericError(title, message) {
         hideLoading();
-        showModal(apiErrorOverlay);
+        errorTitle.textContent = title;
+        errorMessage.innerHTML = message;
+        showModal(errorOverlay);
     }
     function showNotification(message, duration = 1500) {
         const notification = document.createElement('div');
@@ -583,22 +489,15 @@ document.addEventListener('DOMContentLoaded', () => {
         setTimeout(() => notification.remove(), duration);
     }
     function shakeRow(rowNum) {
-        for (let i = 0; i < WORD_LENGTH; i++) {
-            document.getElementById(`tile-${rowNum}-${i}`).classList.add('shake');
-        }
-        setTimeout(() => {
-            for (let i = 0; i < WORD_LENGTH; i++) {
-                document.getElementById(`tile-${rowNum}-${i}`).classList.remove('shake');
-            }
-        }, 500);
+        const row = Array.from(gameBoard.children).slice(rowNum * WORD_LENGTH, (rowNum + 1) * WORD_LENGTH);
+        row.forEach(tile => tile.classList.add('shake'));
+        setTimeout(() => row.forEach(tile => tile.classList.remove('shake')), 500);
     }
     function showModal(modal) {
-        modal.classList.remove('hidden');
-        modal.classList.add('flex');
+        modal.classList.remove('hidden'); modal.classList.add('flex');
     }
     function hideModal(modal) {
-        modal.classList.add('hidden');
-        modal.classList.remove('flex');
+        modal.classList.add('hidden'); modal.classList.remove('flex');
     }
     function showResultModal(isWin) {
         resultTitle.textContent = isWin ? 'Gratulacje!' : 'Niestety, nie udało się';
@@ -606,8 +505,7 @@ document.addEventListener('DOMContentLoaded', () => {
         showModal(resultModal);
     }
     function updateWinCount() {
-        let wins = parseInt(localStorage.getItem('bordle_wins') || '0');
-        wins++;
+        let wins = parseInt(localStorage.getItem('bordle_wins') || '0') + 1;
         localStorage.setItem('bordle_wins', wins);
         winCountEl.textContent = wins;
     }
@@ -625,7 +523,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 x: Math.random() * confettiCanvas.width,
                 y: confettiCanvas.height + Math.random() * 50,
                 radius: Math.random() * 5 + 2,
-                color: `hsl(${Math.random() * 60 + 30}, 100%, 50%)`,
+                color: `hsl(${Math.random() * 360}, 100%, 70%)`,
                 vx: Math.random() * 10 - 5,
                 vy: Math.random() * -20 - 10,
                 alpha: 1
@@ -636,23 +534,16 @@ document.addEventListener('DOMContentLoaded', () => {
     function animateConfetti() {
         confettiCtx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
         confettiParticles.forEach((p, i) => {
-            p.vy += 0.4;
-            p.x += p.vx;
-            p.y += p.vy;
-            p.alpha -= 0.01;
+            p.vy += 0.4; p.x += p.vx; p.y += p.vy; p.alpha -= 0.01;
             if (p.alpha <= 0) confettiParticles.splice(i, 1);
-
             confettiCtx.globalAlpha = p.alpha;
             confettiCtx.fillStyle = p.color;
             confettiCtx.beginPath();
             confettiCtx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
             confettiCtx.fill();
         });
-        if (confettiParticles.length > 0) {
-            requestAnimationFrame(animateConfetti);
-        } else {
-            confettiCtx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
-        }
+        if (confettiParticles.length > 0) requestAnimationFrame(animateConfetti);
+        else confettiCtx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
     }
 
     // --- Event Listeners ---
@@ -661,14 +552,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const key = e.target.closest('[data-key]');
         if (key) handleKeyPress(key.dataset.key);
     });
-    playAgainButton.addEventListener('click', () => {
-        hideModal(resultModal);
-        initGame();
-    });
-    retryInitButton.addEventListener('click', () => {
-        hideModal(apiErrorOverlay);
-        initGame();
-    });
+    playAgainButton.addEventListener('click', () => { hideModal(resultModal); initGame(); });
     changelogButton.addEventListener('click', () => showModal(changelogModal));
     closeChangelogButton.addEventListener('click', () => hideModal(changelogModal));
     statsButton.addEventListener('click', () => showModal(statsModal));
