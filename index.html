@@ -1,16 +1,57 @@
 <!DOCTYPE html>
-<html lang="pl">
+<html lang="pl" data-theme="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BORDLE! 🍕</title>
+    <!-- Ostrzeżenie: cdn.tailwindcss.com nie jest zalecany w produkcji. Użyj lokalnej instalacji Tailwind CSS: https://tailwindcss.com/docs/installation -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
     <style>
+        /* Domyślny tryb jasny */
+        :root {
+            --tw-bg-color: #ffffff;
+            --tw-text-color: #111827;
+            --tw-tile-border-color: #e5e7eb;
+            --tw-tile-filled-border-color: #d1d5db;
+            --tw-key-bg-color: #e5e7eb;
+            --tw-key-hover-bg-color: #d1d5db;
+            --tw-key-special-bg-color: #d1d5db;
+            --tw-modal-bg-color: #ffffff;
+            --tw-modal-text-color: #111827;
+            --tw-notification-bg-color: #374151;
+            --tw-notification-text-color: #ffffff;
+            --tw-spinner-border-color: rgba(0, 0, 0, 0.1);
+            --tw-spinner-left-border-color: #3b82f6;
+            --tw-button-close-bg-color: #e5e7eb;
+        }
+
+        /* Tryb ciemny */
+        [data-theme="dark"] {
+            color-scheme: dark;
+            --tw-bg-color: #111827;
+            --tw-text-color: #e5e7eb;
+            --tw-tile-border-color: #4b5563;
+            --tw-tile-filled-border-color: #6b7280;
+            --tw-key-bg-color: #4b5563;
+            --tw-key-hover-bg-color: #6b7280;
+            --tw-key-special-bg-color: #6b7280;
+            --tw-modal-bg-color: #1f2937;
+            --tw-modal-text-color: #e5e7eb;
+            --tw-notification-bg-color: #e5e7eb;
+            --tw-notification-text-color: #111827;
+            --tw-spinner-border-color: rgba(255, 255, 255, 0.1);
+            --tw-spinner-left-border-color: #60a5fa;
+            --tw-button-close-bg-color: #4b5563;
+        }
+
         body {
             font-family: 'Inter', sans-serif;
             touch-action: manipulation;
+            background-color: var(--tw-bg-color);
+            color: var(--tw-text-color);
         }
+
         .tile {
             width: 62px;
             height: 62px;
@@ -23,17 +64,20 @@
             vertical-align: middle;
             box-sizing: border-box;
             text-transform: uppercase;
-            border: 2px solid #e5e7eb;
+            border: 2px solid var(--tw-tile-border-color);
             transition: transform 0.6s;
             transform-style: preserve-3d;
-            position: relative; 
+            position: relative;
         }
+
         .tile.filled {
-            border-color: #d1d5db;
+            border-color: var(--tw-tile-filled-border-color);
         }
+
         .tile.flip {
             transform: rotateX(180deg);
         }
+
         .tile .front, .tile .back {
             position: absolute;
             width: 100%;
@@ -45,62 +89,118 @@
             backface-visibility: hidden;
             border-radius: 4px;
         }
-        
+
         .tile .back {
             transform: rotateX(180deg);
         }
-        
+
         .tile.correct .back { background-color: #6aaa64; border-color: #6aaa64; color: white; }
         .tile.present .back { background-color: #c9b458; border-color: #c9b458; color: white; }
         .tile.absent .back { background-color: #787c7e; border-color: #787c7e; color: white; }
-        
+
         .key { transition: background-color 0.2s ease-in-out; }
         .key.correct { background-color: #6aaa64 !important; border-color: #6aaa64 !important; color: white !important; }
         .key.present { background-color: #c9b458 !important; border-color: #c9b458 !important; color: white !important; }
         .key.absent { background-color: #787c7e !important; border-color: #787c7e !important; color: white !important; }
-        
+
         @keyframes shake {
             0%, 100% { transform: translateX(0); }
             10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
             20%, 40%, 60%, 80% { transform: translateX(5px); }
         }
         .shake { animation: shake 0.5s; }
+
+        /* Animacja dla modali */
         @keyframes pop-in {
-            0% { opacity: 0; transform: scale(0.8); }
-            100% { opacity: 1; transform: scale(1); }
+            0% { opacity: 0; transform: translateY(10px) scale(0.98); }
+            100% { opacity: 1; transform: translateY(0) scale(1); }
         }
-        .notification { animation: pop-in 0.3s ease-out; }
-        
+        .modal-content {
+            animation: pop-in 0.2s ease-out forwards;
+            background-color: var(--tw-modal-bg-color);
+            color: var(--tw-modal-text-color);
+        }
+
+        .notification {
+            animation: pop-in 0.3s ease-out;
+            background-color: var(--tw-notification-bg-color);
+            color: var(--tw-notification-text-color);
+        }
+
         #loading-overlay .spinner {
-            border: 4px solid rgba(0, 0, 0, 0.1);
+            border: 4px solid var(--tw-spinner-border-color);
             width: 36px;
             height: 36px;
             border-radius: 50%;
-            border-left-color: #09f;
+            border-left-color: var(--tw-spinner-left-border-color);
             animation: spin 1s ease infinite;
         }
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+
+        #confetti-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 100;
+        }
+
+        /* Styl dla przełącznika motywu */
+        #theme-toggle {
+            display: none;
+        }
+        .theme-toggle-label {
+            cursor: pointer;
+            position: relative;
+        }
+        .theme-icon-light, .theme-icon-dark {
+            transition: opacity 0.2s;
+        }
+        [data-theme="dark"] .theme-icon-light {
+            opacity: 0;
+            position: absolute;
+        }
+        [data-theme="dark"] .theme-icon-dark {
+            opacity: 1;
+        }
+        .theme-icon-dark {
+            opacity: 0;
+            position: absolute;
+        }
+        .theme-icon-light {
+            opacity: 1;
+        }
     </style>
 </head>
-<body class="bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200 flex flex-col items-center justify-between min-h-screen p-2">
+<body class="flex flex-col items-center justify-between min-h-screen p-2">
+    <input type="checkbox" id="theme-toggle" class="hidden">
+    <canvas id="confetti-canvas"></canvas>
 
-    <header class="w-full max-w-md mx-auto text-center py-4 border-b border-gray-300 dark:border-gray-600">
+    <header class="w-full max-w-md mx-auto text-center py-4 border-b border-gray-300 flex justify-between items-center">
+        <button id="stats-button" class="text-gray-500 p-2 rounded-full hover:bg-gray-100">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
+        </button>
         <h1 class="text-4xl font-bold tracking-wider">BORDLE 🍕</h1>
+        <button id="changelog-button" class="text-gray-500 p-2 rounded-full hover:bg-gray-100">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+        </button>
     </header>
 
-    <div id="notification-container" class="fixed top-16 h-12 flex items-center justify-center z-50 pointer-events-none"></div>
+    <div id="notification-container" class="fixed top-24 h-12 flex items-center justify-center z-50 pointer-events-none w-full"></div>
 
     <main id="game-container" class="flex-grow flex items-center justify-center w-full">
         <div id="game-board" class="grid grid-cols-5 grid-rows-6 gap-1.5"></div>
     </main>
 
     <div id="keyboard" class="w-full max-w-lg mx-auto p-2"></div>
-    
-    <div id="result-modal" class="fixed inset-0 bg-black bg-opacity-60 hidden items-center justify-center z-50">
-        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-8 max-w-sm w-full text-center">
+
+    <div id="result-modal" class="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm hidden items-center justify-center z-50 transition-opacity duration-300">
+        <div class="modal-content rounded-lg shadow-xl p-8 max-w-sm w-full text-center">
             <h2 id="result-title" class="text-2xl font-bold mb-4"></h2>
             <p class="mb-2">Prawidłowe słowo to:</p>
             <p id="correct-word" class="text-2xl font-bold uppercase tracking-widest mb-6"></p>
@@ -110,9 +210,52 @@
         </div>
     </div>
 
-    <div id="loading-overlay" class="fixed inset-0 bg-white dark:bg-gray-900 bg-opacity-80 flex-col hidden items-center justify-center z-50">
+    <div id="changelog-modal" class="fixed inset-0 bg-black bg-opacity-60 hidden items-center justify-center z-50 transition-opacity duration-300">
+        <div class="modal-content rounded-lg shadow-xl p-6 max-w-md w-full text-left relative">
+            <h2 class="text-2xl font-bold mb-4">Changelog</h2>
+            <ul class="list-disc list-inside space-y-2">
+                <li><span class="font-bold">v1.4:</span> Poprawki błędów (motywy, UI), ulepszone animacje.</li>
+                <li><span class="font-bold">v1.3:</span> Dodano changelog, statystyki, motywy i konfetti!</li>
+                <li><span class="font-bold">v1.2:</span> Zmiana API na Groq, dodano historię słów.</li>
+                <li><span class="font-bold">v1.1:</span> Dodano przełączaną klawiaturę (PL/EN).</li>
+                <li><span class="font-bold">v1.0:</span> Integracja z AI do losowania i sprawdzania słów.</li>
+            </ul>
+            <button id="close-changelog" class="absolute top-2 right-2 p-2 rounded-full text-2xl leading-none" style="background-color: var(--tw-button-close-bg-color);">
+                &times;
+            </button>
+        </div>
+    </div>
+
+    <div id="stats-modal" class="fixed inset-0 bg-black bg-opacity-60 hidden items-center justify-center z-50 transition-opacity duration-300">
+        <div class="modal-content rounded-lg shadow-xl p-6 max-w-md w-full text-center relative">
+            <h2 class="text-2xl font-bold mb-4">Statystyki</h2>
+            <p class="text-lg">Odgadnięte słowa: <span id="win-count" class="font-bold">0</span></p>
+            <button id="close-stats" class="absolute top-2 right-2 p-2 rounded-full text-2xl leading-none" style="background-color: var(--tw-button-close-bg-color);">
+                &times;
+            </button>
+        </div>
+    </div>
+
+    <div id="api-error-overlay" class="fixed inset-0 bg-black bg-opacity-75 backdrop-blur-sm flex-col hidden items-center justify-center z-[60] text-center p-4">
+        <div class="modal-content p-8 rounded-lg shadow-xl">
+            <h2 class="text-2xl font-bold mb-4">Wystąpił błąd! ⛔</h2>
+            <p class="max-w-md">Nasza strona używa darmowego API, czasem one nie działa.. prosimy wybacz nam 🙏 (możesz spróbować wygenerować słowo ponownie, kliknij tylko w przycisk)</p>
+            <button id="retry-init-button" class="mt-6 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                Spróbuj ponownie
+            </button>
+        </div>
+    </div>
+
+    <div id="loading-overlay" class="fixed inset-0 bg-opacity-80 flex-col hidden items-center justify-center z-[60]" style="background-color: var(--tw-modal-bg-color);">
         <div class="spinner"></div>
         <p id="loading-text" class="mt-4 text-lg">Losuję słowo...</p>
+    </div>
+
+    <div class="fixed bottom-4 left-4">
+        <label for="theme-toggle" class="theme-toggle-label p-2 rounded-full bg-gray-200 inline-block">
+            <svg class="theme-icon-light h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
+            <svg class="theme-icon-dark h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
+        </label>
     </div>
 
 <script>
@@ -125,8 +268,9 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentTile = 0;
     let isGameOver = false;
     let isRequestPending = false;
-    let keyboardMode = 'en'; // 'en' lub 'pl'
-    let wordHistory = []; // Historia losowanych słów
+    let keyboardMode = 'en';
+    let wordHistory = [];
+    const FALLBACK_WORDS = ["kwiat", "słońce", "morze", "drzwi", "kotek", "polska", "serce", "domek"];
 
     // --- ELEMENTY DOM ---
     const gameBoard = document.getElementById('game-board');
@@ -138,50 +282,68 @@ document.addEventListener('DOMContentLoaded', () => {
     const playAgainButton = document.getElementById('play-again-button');
     const loadingOverlay = document.getElementById('loading-overlay');
     const loadingText = document.getElementById('loading-text');
+    const apiErrorOverlay = document.getElementById('api-error-overlay');
+    const retryInitButton = document.getElementById('retry-init-button');
+    const changelogButton = document.getElementById('changelog-button');
+    const changelogModal = document.getElementById('changelog-modal');
+    const closeChangelogButton = document.getElementById('close-changelog');
+    const statsButton = document.getElementById('stats-button');
+    const statsModal = document.getElementById('stats-modal');
+    const closeStatsButton = document.getElementById('close-stats');
+    const winCountEl = document.getElementById('win-count');
+    const confettiCanvas = document.getElementById('confetti-canvas');
+    const confettiCtx = confettiCanvas.getContext('2d');
+    const themeToggle = document.getElementById('theme-toggle');
+    let confettiParticles = [];
+
+    // --- Przełączanie motywu ---
+    const applyTheme = (theme) => {
+        document.documentElement.setAttribute('data-theme', theme);
+        localStorage.setItem('theme', theme);
+        themeToggle.checked = theme === 'dark';
+    };
+
+    const savedTheme = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    applyTheme(savedTheme);
+
+    themeToggle.addEventListener('change', () => {
+        applyTheme(themeToggle.checked ? 'dark' : 'light');
+    });
 
     // --- LOGIKA API GROQ ---
     async function callGroqAPI(prompt) {
-        // UWAGA: Wklej swój klucz API od Groq poniżej.
-        const GROQ_API_KEY = "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"; 
+        const GROQ_API_KEY = "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";
         const apiUrl = 'https://api.groq.com/openai/v1/chat/completions';
 
         if (!GROQ_API_KEY) {
-            showNotification("Brak klucza API Groq!", 5000);
-            return null;
+            return { error: "Brak klucza API Groq!" };
         }
-        
+
         const payload = {
-            model: "llama3-8b-8192", // Szybki model dostępny na Groq
+            model: "llama3-8b-8192",
             messages: [{ role: "user", content: prompt }],
-            temperature: 1, // Zwiększona temperatura dla większej losowości
+            temperature: 1,
             max_tokens: 10,
         };
 
         try {
             const response = await fetch(apiUrl, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${GROQ_API_KEY}`
-                },
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${GROQ_API_KEY}` },
                 body: JSON.stringify(payload)
             });
 
-            if (!response.ok) {
-                throw new Error(`Błąd API Groq: ${response.statusText}`);
-            }
+            if (!response.ok) throw new Error(`Błąd API Groq: ${response.statusText}`);
 
             const result = await response.json();
             if (result.choices && result.choices[0] && result.choices[0].message) {
-                return result.choices[0].message.content.trim().toLowerCase().replace(/[^a-ząćęłńóśźż]/g, '');
-            } else {
-                console.error("Nieoczekiwana struktura odpowiedzi API Groq:", result);
-                return null;
+                const word = result.choices[0].message.content.trim().toLowerCase().replace(/[^a-ząćęłńóśźż]/g, '');
+                return { word };
             }
+            throw new Error("Nieoczekiwana struktura odpowiedzi API Groq");
         } catch (error) {
             console.error("Błąd podczas wywoływania API Groq:", error);
-            showNotification("Błąd połączenia z AI", 3000);
-            return null;
+            return { error: "Błąd połączenia z AI" };
         }
     }
 
@@ -189,24 +351,36 @@ document.addEventListener('DOMContentLoaded', () => {
     async function initGame() {
         showLoading("Losuję słowo...");
         isGameOver = true;
-        
-        let historyPrompt = "";
-        if (wordHistory.length > 0) {
-            historyPrompt = ` Unikaj powtarzania tych słów: ${wordHistory.join(', ')}.`;
-        }
-        const prompt = `Podaj jedno, popularne, pięcioliterowe, polskie słowo w mianowniku liczby pojedynczej. Odpowiedz tylko tym słowem, pisanym małymi literami, bez żadnych dodatkowych znaków, kropek i wyjaśnień, Nie powtarzaj słów, za każdym razem generuj inne.${historyPrompt}`;
 
-        targetWord = await callGroqAPI(prompt);
-        
-        if (!targetWord || targetWord.length !== 5) {
-            showNotification("Błąd losowania. Używam słowa awaryjnego. (lub próbuj odświeżyć stronę)", 3000);
-            targetWord = "kwiat"; 
+        let historyPrompt = wordHistory.length > 0 ? ` Unikaj powtarzania tych słów: ${wordHistory.join(', ')}.` : "";
+        const prompt = `Podaj jedno, popularne, pięcioliterowe, polskie słowo w mianowniku liczby pojedynczej. Odpowiedz tylko tym słowem, pisanym małymi literami, bez żadnych dodatkowych znaków, kropek i wyjaśnień.${historyPrompt}`;
+
+        const apiResult = await callGroqAPI(prompt);
+
+        if (apiResult.error || !apiResult.word || apiResult.word.length !== 5) {
+            if (apiResult.error) {
+                showApiError();
+            } else {
+                showNotification("Wystąpił błąd!", 3000);
+                showApiError();
+                targetWord = FALLBACK_WORDS[Math.floor(Math.random() * FALLBACK_WORDS.length)];
+                wordHistory.push(targetWord);
+                console.log("Wylosowane słowo (awaryjne):", targetWord);
+                setupBoardAndKeyboard();
+            }
+            hideLoading();
+            return;
         }
-        
+
+        targetWord = apiResult.word;
         wordHistory.push(targetWord);
         console.log("Wylosowane słowo:", targetWord);
-        console.log("Historia słów:", wordHistory);
 
+        setupBoardAndKeyboard();
+        hideLoading();
+    }
+
+    function setupBoardAndKeyboard() {
         currentRow = 0;
         currentTile = 0;
         isGameOver = false;
@@ -231,22 +405,13 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         renderKeyboard();
-        resultModal.classList.add('hidden');
-        hideLoading();
+        hideModal(resultModal);
     }
-    
+
     function renderKeyboard() {
         keyboard.innerHTML = '';
-
-        const enKeyRows = [
-            ['q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p'],
-            ['a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l'],
-            ['z', 'x', 'c', 'v', 'b', 'n', 'm']
-        ];
-        const plKeyRows = [
-            ['ą', 'ć', 'ę', 'ł', 'ń', 'ó', 'ś', 'ż', 'ź']
-        ];
-
+        const enKeyRows = [['q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p'], ['a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l'], ['z', 'x', 'c', 'v', 'b', 'n', 'm']];
+        const plKeyRows = [['ą', 'ć', 'ę', 'ł', 'ń', 'ó', 'ś', 'ź', 'ż']];
         const rowsToRender = keyboardMode === 'en' ? enKeyRows : plKeyRows;
 
         rowsToRender.forEach(row => {
@@ -254,7 +419,10 @@ document.addEventListener('DOMContentLoaded', () => {
             rowDiv.classList.add('flex', 'justify-center', 'gap-1.5', 'my-1.5');
             row.forEach(key => {
                 const button = document.createElement('button');
-                button.classList.add('key', 'h-14', 'rounded-md', 'font-bold', 'uppercase', 'flex-1', 'bg-gray-200', 'dark:bg-gray-600', 'hover:bg-gray-300', 'dark:hover:bg-gray-700');
+                button.classList.add('key', 'h-14', 'rounded-md', 'font-bold', 'uppercase', 'flex-1');
+                button.style.backgroundColor = 'var(--tw-key-bg-color)';
+                button.addEventListener('mouseenter', () => button.style.backgroundColor = 'var(--tw-key-hover-bg-color)');
+                button.addEventListener('mouseleave', () => button.style.backgroundColor = 'var(--tw-key-bg-color)');
                 button.dataset.key = key;
                 button.textContent = key;
                 rowDiv.appendChild(button);
@@ -264,28 +432,27 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const bottomRow = document.createElement('div');
         bottomRow.classList.add('flex', 'justify-center', 'gap-1.5', 'my-1.5');
-
         const enterKey = document.createElement('button');
-        enterKey.classList.add('key', 'h-14', 'rounded-md', 'font-bold', 'uppercase', 'flex-1', 'bg-gray-300', 'dark:bg-gray-500');
+        enterKey.classList.add('key', 'h-14', 'rounded-md', 'font-bold', 'uppercase', 'flex-1');
+        enterKey.style.backgroundColor = 'var(--tw-key-special-bg-color)';
         enterKey.dataset.key = 'enter';
         enterKey.textContent = 'Enter';
         bottomRow.appendChild(enterKey);
-
         const toggleButton = document.createElement('button');
-        toggleButton.classList.add('key', 'h-14', 'rounded-md', 'font-bold', 'px-2', 'text-xs', 'flex-1', 'bg-gray-300', 'dark:bg-gray-500');
+        toggleButton.classList.add('key', 'h-14', 'rounded-md', 'font-bold', 'px-2', 'text-sm', 'flex-1');
+        toggleButton.style.backgroundColor = 'var(--tw-key-special-bg-color)';
         toggleButton.textContent = keyboardMode === 'en' ? 'Polskie Litery' : 'Angielskie Litery';
         toggleButton.onclick = () => {
             keyboardMode = keyboardMode === 'en' ? 'pl' : 'en';
             renderKeyboard();
         };
         bottomRow.appendChild(toggleButton);
-
         const backspaceKey = document.createElement('button');
-        backspaceKey.classList.add('key', 'h-14', 'rounded-md', 'font-bold', 'uppercase', 'flex-1', 'bg-gray-300', 'dark:bg-gray-500');
+        backspaceKey.classList.add('key', 'h-14', 'rounded-md', 'font-bold', 'uppercase', 'flex-1');
+        backspaceKey.style.backgroundColor = 'var(--tw-key-special-bg-color)';
         backspaceKey.dataset.key = 'backspace';
-        backspaceKey.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2M3 12l6.414 6.414a2 2 0 002.828 0L19 12M3 12l6.414-6.414a2 2 0 012.828 0L19 12" /></svg>`;
+        backspaceKey.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2M3 12l6.414 6.414a2 2 0 002.828 0L19 12M3 12l-6.414-6.414a2 2 0 012.828 0L19 12" /></svg>`;
         bottomRow.appendChild(backspaceKey);
-
         keyboard.appendChild(bottomRow);
     }
 
@@ -320,26 +487,20 @@ document.addEventListener('DOMContentLoaded', () => {
             shakeRow(currentRow);
             return;
         }
-
         let guess = '';
         for (let i = 0; i < WORD_LENGTH; i++) {
             guess += document.getElementById(`tile-${currentRow}-${i}`).querySelector('.front').textContent;
         }
-
         showLoading("Sprawdzam słowo...");
         isRequestPending = true;
-
-        const validationResponse = await callGroqAPI(`Czy "${guess}" to jest poprawne pięcioliterowe polskie słowo? Odpowiedz tylko i wyłącznie "tak" lub "nie".`);
-        
+        const validationResult = await callGroqAPI(`Czy "${guess}" to jest poprawne pięcioliterowe polskie słowo? Odpowiedz tylko i wyłącznie "tak" lub "nie".`);
         isRequestPending = false;
         hideLoading();
-
-        if (validationResponse !== 'tak') {
-            showNotification("Nie ma takiego słowa");
+        if (validationResult.error || validationResult.word !== 'tak') {
+            showNotification(validationResult.error || "Nie ma takiego słowa");
             shakeRow(currentRow);
             return;
         }
-
         flipRow(guess);
     }
 
@@ -347,14 +508,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const guessChars = guess.split('');
         const targetChars = [...targetWord];
         const statuses = Array(WORD_LENGTH).fill('absent');
-
         for (let i = 0; i < WORD_LENGTH; i++) {
             if (guessChars[i] === targetChars[i]) {
                 statuses[i] = 'correct';
                 targetChars[i] = null;
             }
         }
-
         for (let i = 0; i < WORD_LENGTH; i++) {
             if (statuses[i] === 'correct') continue;
             const letterIndexInTarget = targetChars.indexOf(guessChars[i]);
@@ -363,31 +522,23 @@ document.addEventListener('DOMContentLoaded', () => {
                 targetChars[letterIndexInTarget] = null;
             }
         }
-
         statuses.forEach((status, i) => {
             setTimeout(() => {
                 const tile = document.getElementById(`tile-${currentRow}-${i}`);
                 const back = tile.querySelector('.back');
                 back.textContent = guessChars[i];
-                
-                tile.classList.add(status);
-                tile.classList.add('flip');
-                
+                tile.classList.add(status, 'flip');
                 updateKeyboard(guessChars[i], status);
             }, i * 300);
         });
-
         setTimeout(() => checkGameOver(guess), WORD_LENGTH * 300);
     }
-    
+
     function updateKeyboard(letter, status) {
         const key = keyboard.querySelector(`[data-key='${letter}']`);
         if (!key) return;
         const currentStatus = key.dataset.status;
-
-        if (currentStatus === 'correct') return;
-        if (currentStatus === 'present' && status === 'absent') return;
-        
+        if (currentStatus === 'correct' || (currentStatus === 'present' && status === 'absent')) return;
         key.classList.remove('correct', 'present', 'absent');
         key.classList.add(status);
         key.dataset.status = status;
@@ -397,6 +548,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (guess === targetWord) {
             showNotification("Wygrałeś!", 2000);
             isGameOver = true;
+            updateWinCount();
+            launchConfetti();
             setTimeout(() => showResultModal(true), 1000);
         } else if (currentRow === GUESS_COUNT - 1) {
             isGameOver = true;
@@ -406,27 +559,29 @@ document.addEventListener('DOMContentLoaded', () => {
             currentTile = 0;
         }
     }
-    
+
+    // --- UI & Storage ---
     function showLoading(text) {
         loadingText.textContent = text;
         loadingOverlay.classList.remove('hidden');
         loadingOverlay.classList.add('flex');
     }
-
     function hideLoading() {
         loadingOverlay.classList.add('hidden');
         loadingOverlay.classList.remove('flex');
     }
-
+    function showApiError() {
+        hideLoading();
+        showModal(apiErrorOverlay);
+    }
     function showNotification(message, duration = 1500) {
         const notification = document.createElement('div');
         notification.textContent = message;
-        notification.className = 'notification bg-gray-800 dark:bg-gray-200 text-white dark:text-black font-bold py-2 px-4 rounded-md shadow-lg';
+        notification.className = 'notification font-bold py-2 px-4 rounded-md shadow-lg';
         notificationContainer.innerHTML = '';
         notificationContainer.appendChild(notification);
         setTimeout(() => notification.remove(), duration);
     }
-
     function shakeRow(rowNum) {
         for (let i = 0; i < WORD_LENGTH; i++) {
             document.getElementById(`tile-${rowNum}-${i}`).classList.add('shake');
@@ -437,24 +592,92 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }, 500);
     }
-    
+    function showModal(modal) {
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+    }
+    function hideModal(modal) {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+    }
     function showResultModal(isWin) {
         resultTitle.textContent = isWin ? 'Gratulacje!' : 'Niestety, nie udało się';
         correctWordEl.textContent = targetWord;
-        resultModal.classList.remove('hidden');
-        resultModal.classList.add('flex');
+        showModal(resultModal);
+    }
+    function updateWinCount() {
+        let wins = parseInt(localStorage.getItem('bordle_wins') || '0');
+        wins++;
+        localStorage.setItem('bordle_wins', wins);
+        winCountEl.textContent = wins;
+    }
+    function loadWinCount() {
+        winCountEl.textContent = localStorage.getItem('bordle_wins') || '0';
     }
 
+    // --- Confetti ---
+    function launchConfetti() {
+        confettiCanvas.width = window.innerWidth;
+        confettiCanvas.height = window.innerHeight;
+        confettiParticles = [];
+        for (let i = 0; i < 100; i++) {
+            confettiParticles.push({
+                x: Math.random() * confettiCanvas.width,
+                y: confettiCanvas.height + Math.random() * 50,
+                radius: Math.random() * 5 + 2,
+                color: `hsl(${Math.random() * 60 + 30}, 100%, 50%)`,
+                vx: Math.random() * 10 - 5,
+                vy: Math.random() * -20 - 10,
+                alpha: 1
+            });
+        }
+        animateConfetti();
+    }
+    function animateConfetti() {
+        confettiCtx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+        confettiParticles.forEach((p, i) => {
+            p.vy += 0.4;
+            p.x += p.vx;
+            p.y += p.vy;
+            p.alpha -= 0.01;
+            if (p.alpha <= 0) confettiParticles.splice(i, 1);
+
+            confettiCtx.globalAlpha = p.alpha;
+            confettiCtx.fillStyle = p.color;
+            confettiCtx.beginPath();
+            confettiCtx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+            confettiCtx.fill();
+        });
+        if (confettiParticles.length > 0) {
+            requestAnimationFrame(animateConfetti);
+        } else {
+            confettiCtx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+        }
+    }
+
+    // --- Event Listeners ---
     document.addEventListener('keydown', (e) => handleKeyPress(e.key.toLowerCase()));
     keyboard.addEventListener('click', (e) => {
         const key = e.target.closest('[data-key]');
         if (key) handleKeyPress(key.dataset.key);
     });
-    playAgainButton.addEventListener('click', initGame);
+    playAgainButton.addEventListener('click', () => {
+        hideModal(resultModal);
+        initGame();
+    });
+    retryInitButton.addEventListener('click', () => {
+        hideModal(apiErrorOverlay);
+        initGame();
+    });
+    changelogButton.addEventListener('click', () => showModal(changelogModal));
+    closeChangelogButton.addEventListener('click', () => hideModal(changelogModal));
+    statsButton.addEventListener('click', () => showModal(statsModal));
+    closeStatsButton.addEventListener('click', () => hideModal(statsModal));
 
+    // --- Initial Load ---
+    loadWinCount();
     initGame();
 });
 </script>
-
 </body>
 </html>
