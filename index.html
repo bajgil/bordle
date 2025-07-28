@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BORDLE! 🦆</title>
+    <title>BORDLE! ☕</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
     <style>
@@ -148,7 +148,7 @@
         <button id="stats-button" class="p-2 rounded-full hover:bg-gray-100">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
         </button>
-        <h1 class="text-4xl font-bold tracking-wider">BORDLE 🦆</h1>
+        <h1 class="text-4xl font-bold tracking-wider">BORDLE ☕</h1>
         <button id="changelog-button" class="p-2 rounded-full hover:bg-gray-100">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
         </button>
@@ -177,6 +177,7 @@
         <div class="modal-content rounded-lg shadow-xl p-6 max-w-md w-full text-left relative">
             <h2 class="text-2xl font-bold mb-4">Changelog</h2>
             <ul class="list-disc list-inside space-y-2">
+                <li><span class="font-bold">v2.1:</span> Nowa walidacja słów przy użyciu API (Wikisłownik)</li>
                 <li><span class="font-bold">v2.0:</span> Zastąpiono AI Lokalnym bankiem słów - Usprawniono grę.</li>
             </ul>
             <button id="close-changelog" class="absolute top-2 right-2 p-2 rounded-full text-2xl leading-none" style="background-color: var(--tw-button-close-bg-color);">&times;</button>
@@ -221,7 +222,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let isGameOver = false;
     let keyboardMode = 'en';
     let wordHistory = [];
-    let validWords = [];
+    let answerWords = []; // Lista słów do losowania hasła
 
     // --- ELEMENTY DOM ---
     const gameBoard = document.getElementById('game-board');
@@ -265,33 +266,33 @@ document.addEventListener('DOMContentLoaded', () => {
         showLoading("Wczytuję listę słów...");
         isGameOver = true;
 
-        if (validWords.length === 0) {
+        if (answerWords.length === 0) {
             try {
                 const response = await fetch('slowa.txt');
                 if (!response.ok) throw new Error('Nie udało się wczytać pliku slowa.txt');
                 const text = await response.text();
-                validWords = text.split(',').map(w => w.trim().toLowerCase()).filter(w => w.length === WORD_LENGTH && w.match(/^[a-ząćęłńóśźż]+$/));
-                if (validWords.length === 0) throw new Error('Plik slowa.txt jest pusty lub nie zawiera prawidłowych słów.');
+                answerWords = text.split(',').map(w => w.trim().toLowerCase()).filter(w => w.length === WORD_LENGTH && w.match(/^[a-ząćęłńóśźż]+$/));
+                if (answerWords.length === 0) throw new Error('Plik slowa.txt jest pusty lub nie zawiera prawidłowych słów.');
             } catch (error) {
                 console.error("Błąd ładowania słów:", error);
-                showGenericError("Błąd krytyczny ⛔", `Nie można załadować pliku ze słowami. Skontaktuj się z Administratorem witryny - root@bajgiel.fun`);
+                showGenericError("Błąd krytyczny ⛔", `Nie można załadować pliku ze słowami (slowa.txt). Skontaktuj się z Administratorem witryny - root@bajgiel.fun`);
                 hideLoading();
                 return;
             }
         }
         
         showLoading("Losuję słowo...");
-        let availableWords = validWords.filter(w => !wordHistory.includes(w));
+        let availableWords = answerWords.filter(w => !wordHistory.includes(w));
         
         if (availableWords.length === 0) {
             wordHistory = [];
-            availableWords = validWords;
+            availableWords = answerWords;
             showNotification("Wszystkie słowa użyte! Historia zresetowana.", 3000);
         }
         
         targetWord = availableWords[Math.floor(Math.random() * availableWords.length)];
         wordHistory.push(targetWord);
-        console.log("Wylosowane słowo:", targetWord);
+        console.log("Pomyślnie wylosowano słowo!");
         
         setupBoardAndKeyboard();
         hideLoading();
@@ -390,7 +391,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    function submitGuess() {
+    async function submitGuess() {
         if (currentTile < WORD_LENGTH) {
             showNotification("Za mało liter");
             shakeRow(currentRow);
@@ -400,34 +401,65 @@ document.addEventListener('DOMContentLoaded', () => {
         for (let i = 0; i < WORD_LENGTH; i++) {
             guess += document.getElementById(`tile-${currentRow}-${i}`).querySelector('.front').textContent;
         }
+        
+        isGameOver = true; // Blokuj interakcje na czas sprawdzania
+        showLoading("Sprawdzam słowo...");
 
-        if (!validWords.includes(guess.toLowerCase())) {
-            showNotification("Nie ma takiego słowa");
-            shakeRow(currentRow);
-            return;
+        try {
+            // Użyj API Wikisłownika do walidacji słowa
+            const apiUrl = `https://pl.wiktionary.org/w/api.php?action=query&titles=${guess.toLowerCase()}&format=json&origin=*`;
+            const response = await fetch(apiUrl);
+            if (!response.ok) throw new Error('Błąd sieci podczas walidacji.');
+            const data = await response.json();
+            
+            // Sprawdź, czy strona dla danego słowa istnieje
+            const pageId = Object.keys(data.query.pages)[0];
+            
+            if (pageId === '-1') {
+                // Słowo nie istnieje
+                hideLoading();
+                showNotification("Nie ma takiego słowa w słowniku");
+                shakeRow(currentRow);
+                isGameOver = false; // Odblokuj grę
+                return;
+            }
+
+            // Słowo jest poprawne, kontynuuj grę
+            hideLoading();
+            isGameOver = false; // Odblokuj grę
+            flipRow(guess);
+
+        } catch (error) {
+            hideLoading();
+            isGameOver = false; // Odblokuj grę
+            console.error("Błąd podczas sprawdzania słowa w API:", error);
+            showNotification("Błąd połączenia. Spróbuj ponownie.");
         }
-        flipRow(guess);
     }
 
     function flipRow(guess) {
+        isGameOver = true; // Blokuj interakcje podczas animacji
         const guessChars = guess.split('');
         const targetChars = [...targetWord];
         const statuses = Array(WORD_LENGTH).fill('absent');
         
+        // Sprawdzenie "correct" (zielonych) liter
         for (let i = 0; i < WORD_LENGTH; i++) {
             if (guessChars[i] === targetChars[i]) {
                 statuses[i] = 'correct';
-                targetChars[i] = null;
+                targetChars[i] = null; // Usuń literę, aby nie została ponownie dopasowana
             }
         }
+        // Sprawdzenie "present" (żółtych) liter
         for (let i = 0; i < WORD_LENGTH; i++) {
             if (statuses[i] === 'correct') continue;
             const letterIndexInTarget = targetChars.indexOf(guessChars[i]);
             if (letterIndexInTarget !== -1) {
                 statuses[i] = 'present';
-                targetChars[letterIndexInTarget] = null;
+                targetChars[letterIndexInTarget] = null; // Usuń literę
             }
         }
+        // Animacja odwracania
         statuses.forEach((status, i) => {
             setTimeout(() => {
                 const tile = document.getElementById(`tile-${currentRow}-${i}`);
@@ -437,6 +469,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 updateKeyboard(guessChars[i], status);
             }, i * 300);
         });
+        // Sprawdzenie końca gry po animacji
         setTimeout(() => checkGameOver(guess), WORD_LENGTH * 300);
     }
 
@@ -463,6 +496,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             currentRow++;
             currentTile = 0;
+            isGameOver = false; // Odblokuj na następną rundę
         }
     }
 
